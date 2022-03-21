@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: EcosystemResource
+metadata:
+  name: Local-SQL
+spec:
+  fqn: Hume.Orchestra.Resource.JDBC
+  parameters:
+    - name: password
+      value: postgres
+    - name: user
+      value: postgres
+    - name: jdbcUrl
+      value: jdbc:postgresql://db/Chinook
+    - name: autoCommit
+      value: true

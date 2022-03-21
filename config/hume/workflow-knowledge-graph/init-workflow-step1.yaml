@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: Workflow
+metadata:
+    name: step1
+spec:
+    components:
+    -   config:
+            delay: 1
+            fixed_rate: true
+            period: 100000
+            store_error_content: true
+        name: onStartup
+        to:
+        - Setup
+        type: '#Hume.Orchestra.Clock.Timer'
+    -   config:
+            failure_handler: null
+            store_error_content: true
+            store_message_content: true
+            transformer_script: 'import os
+
+                # mark this step as to do
+
+                os.environ.pop("WORKSHOP_STEP1_DONE",None)'
+        name: Setup
+        to: []
+        type: '#Hume.Orchestra.Processor.MessageTransformer'
+    -   config:
+            delay: 1
+            fixed_rate: true
+            period: 1
+            store_error_content: true
+        name: Once
+        to:
+        - Simulate The Step1
+        type: '#Hume.Orchestra.Clock.Timer'
+    -   config:
+            failure_handler: null
+            store_error_content: true
+            store_message_content: true
+            transformer_script: 'import random
+
+                return {"t":random.random()}'
+        name: Simulate The Step1
+        to:
+        - Check if Completed
+        type: '#Hume.Orchestra.Processor.MessageTransformer'
+    -   config:
+            failure_handler: null
+            filter_script: return body["t"] > 0.8
+            store_error_content: true
+            store_message_content: true
+        name: Check if Completed
+        to:
+        - Notify Done
+        type: '#Hume.Orchestra.Filter.MessageFilter'
+    -   config:
+            failure_handler: null
+            store_error_content: true
+            store_message_content: true
+            transformer_script: 'import os
+
+                os.environ["WORKSHOP_STEP1_DONE"]="YES"'
+        name: Notify Done
+        to:
+        - Stop
+        type: '#Hume.Orchestra.Processor.MessageTransformer'
+    -   config:
+            store_error_content: true
+            store_message_content: true
+        name: Stop
+        to: []
+        type: '#Hume.Orchestra.Action.Stop'
+    label: step1

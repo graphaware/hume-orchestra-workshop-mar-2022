@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: KnowledgeGraph
+metadata:
+    name: workshop
+spec:
+    actions: []
+    label: workshop
+    perspectives:
+    - full-perspective
+    schema:
+        classes:
+        -   attributes:
+            -   full_text: true
+                label: Name
+                type: STRING
+            -   label: TrackId
+                type: INTEGER
+            color: '#6200EA'
+            icon: audiotrack
+            label: Track
+        -   attributes:
+            -   full_text: true
+                label: Name
+                type: STRING
+            -   label: PlaylistId
+                type: INTEGER
+            color: '#26A69A'
+            icon: mdi-playlist-music-outline
+            label: Playlist
+        relationships:
+        -   end: Track
+            label: CONTAINS_TRACK
+            start: Playlist
+    workflows:
+    - workflow-test-basic
+    - setup-library
+    - generated-workflow
+    - step1
+    - step2
+    - step1-with-utils
+    - step2-with-utils

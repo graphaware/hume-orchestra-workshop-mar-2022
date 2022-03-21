@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: Workflow
+metadata:
+    name: step2
+spec:
+    components:
+    -   config:
+            delay: 2
+            fixed_rate: true
+            period: 5
+            store_error_content: true
+        name: Periodically
+        to:
+        - Check if Ready
+        - Check if Ready Trigger Once
+        type: '#Hume.Orchestra.Clock.Timer'
+    -   config:
+            store_error_content: true
+            store_message_content: true
+        name: Continue Workflow
+        to: []
+        type: '#Hume.Orchestra.Monitor.Observer'
+    -   config:
+            delay: 1
+            fixed_rate: true
+            period: 100000000
+            store_error_content: true
+        name: OnStartup
+        to:
+        - Setup
+        type: '#Hume.Orchestra.Clock.Timer'
+    -   config:
+            failure_handler: null
+            store_error_content: true
+            store_message_content: true
+            transformer_script: 'import os
+
+                os.environ.pop("WORKSHOP_STEP1_DONE",None)
+
+                os.environ.pop("WORKSHOP_STEP2_RUNNING",None)'
+        name: Setup
+        to: []
+        type: '#Hume.Orchestra.Processor.MessageTransformer'
+    -   config:
+            failure_handler: null
+            filter_script: 'import os
+
+                return os.environ.get("WORKSHOP_STEP1_DONE") =="YES"'
+            store_error_content: true
+            store_message_content: true
+        name: Check if Ready
+        to:
+        - Continue Workflow
+        type: '#Hume.Orchestra.Filter.MessageFilter'
+    -   config:
+            failure_handler: null
+            filter_script: "\"\"\"\n we trigger only if we are ready but not yet running\n\
+                \ this will prevent us to trigger multiple times after the first trigger\n\
+                \"\"\"\nimport os\nready = (os.environ.get(\"WORKSHOP_STEP1_DONE\"\
+                ) ==\"YES\")\nrunning = (os.environ.get(\"WORKSHOP_STEP2_RUNNING\"\
+                ) ==\"YES\")\nif ready and not running:\n  # mark as running \n  os.environ[\"\
+                WORKSHOP_STEP2_RUNNING\"] =\"YES\"\n  return True\nreturn False"
+            store_error_content: true
+            store_message_content: true
+        name: Check if Ready Trigger Once
+        to:
+        - Continue Workflow Triggered once
+        type: '#Hume.Orchestra.Filter.MessageFilter'
+    -   config:
+            store_error_content: true
+            store_message_content: true
+        name: Continue Workflow Triggered once
+        to: []
+        type: '#Hume.Orchestra.Monitor.Observer'
+    label: step2

@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: Workflow
+metadata:
+    name: setup-library
+spec:
+    autostart: true
+    components:
+    -   config:
+            delay: 1
+            fixed_rate: true
+            period: 1000000000
+            store_error_content: true
+            store_message_content: true
+        name: Once
+        to:
+        - Setup Library Folder
+        type: '#Hume.Orchestra.Clock.Timer'
+    -   config:
+            failure_handler: null
+            store_error_content: true
+            store_message_content: true
+            transformer_script: "import sys,os\ntry:\n  os.mkdir(\"/tmp/pyclasspath\"\
+                )\nexcept OSError:\n  pass\n\nsys.path.append(\"/tmp/pyclasspath\"\
+                )\nreturn {\n  \"path\": sys.path\n}"
+        name: Setup Library Folder
+        to:
+        - Updated Library Path
+        - Setup Utils Library
+        type: '#Hume.Orchestra.Processor.MessageTransformer'
+    -   config:
+            store_error_content: true
+            store_message_content: true
+        name: Updated Library Path
+        to: []
+        type: '#Hume.Orchestra.Monitor.Observer'
+    -   config:
+            failure_handler: null
+            store_error_content: true
+            store_message_content: true
+            transformer_script: "from textwrap import dedent\nsourceCode=\"\"\"\n\
+                steps = {}\n\n\ndef setupStepOne():\n    \\\"\"\"Mark the step one\
+                \ to be done\\\"\"\"\n    steps[\"stepOneDone\"] = False\n\n\ndef\
+                \ completeStepOne():\n    \\\"\"\"Mark the step one as completed\\\
+                \"\"\"\n    steps[\"stepOneDone\"] = True\n\n\ndef stepOneIsCompleted():\n\
+                \    \\\"\"\"check whether the step one is completed\\\"\"\"\n   \
+                \ ret = steps.get(\"stepOneDone\")\n    assert ret is not None, \"\
+                you have to call setupStepOne at least once!\"\n    return ret\n\n\
+                \ndef setupStepTwo():\n    \\\"\"\"Mark the step two to be done\\\"\
+                \"\"\n    setupStepOne()\n    steps[\"stepTwoDone\"] = False\n   \
+                \ steps[\"stepTwoRunning\"] = False\n\n\ndef startStepTwo():\n   \
+                \ \\\"\"\"Mark Step Two as in progress\\\"\"\"\n    steps[\"stepTwoRunning\"\
+                ] = True\n\n\ndef stepTwoIsRunning():\n    \\\"\"\"check whether step\
+                \ two is running\\\"\"\"\n    ret = steps.get(\"stepTwoRunning\")\n\
+                \    assert ret is not None, \"you have to call setupStepTwo at least\
+                \ once!\"\n    return ret\n\n\ndef stepTwoIsReady(once=False):\n \
+                \   \\\"\"\"Tell if step two can be started\n       if once is True\
+                \ it will return just once\n    \\\"\"\"\n    return (\n         \
+                \   (not once and stepOneIsCompleted()) or\n            (once and\
+                \ stepOneIsCompleted() and not stepTwoIsRunning())\n    )\n\n\ndef\
+                \ completeStepTwo():\n    \\\"\"\"Mark the step two as completed\\\
+                \"\"\"\n    steps[\"stepTwoDone\"] = True\n\n\"\"\"\n\nf = open(\"\
+                /tmp/pyclasspath/utils.py\",\"w\")\nf.write(dedent(sourceCode))\n\
+                f.close()\n\nimport utils\nreload(utils)\n\nreturn{\n  \"internals\"\
+                :dir(utils)\n}"
+        name: Setup Utils Library
+        to:
+        - Utils Internals
+        type: '#Hume.Orchestra.Processor.MessageTransformer'
+    -   config:
+            store_error_content: true
+            store_message_content: true
+        name: Utils Internals
+        to: []
+        type: '#Hume.Orchestra.Monitor.Observer'
+    label: setup-library

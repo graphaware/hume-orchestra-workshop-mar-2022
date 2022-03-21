@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: Workflow
+metadata:
+    name: step2-with-utils
+spec:
+    components:
+    -   config:
+            delay: 2
+            fixed_rate: true
+            period: 5
+            store_error_content: true
+            store_message_content: true
+        name: Periodically
+        to:
+        - Check if Ready
+        - Check if Ready Trigger Once
+        type: '#Hume.Orchestra.Clock.Timer'
+    -   config:
+            store_error_content: true
+            store_message_content: true
+        name: Continue Workflow
+        to: []
+        type: '#Hume.Orchestra.Monitor.Observer'
+    -   config:
+            delay: 1
+            fixed_rate: true
+            period: 100000000
+            store_error_content: true
+            store_message_content: true
+        name: OnStartup
+        to:
+        - Setup
+        type: '#Hume.Orchestra.Clock.Timer'
+    -   config:
+            failure_handler: null
+            store_error_content: true
+            store_message_content: true
+            transformer_script: 'import utils
+
+                utils.setupStepTwo()'
+        name: Setup
+        to: []
+        type: '#Hume.Orchestra.Processor.MessageTransformer'
+    -   config:
+            failure_handler: null
+            filter_script: 'import utils
+
+                return utils.stepTwoIsReady(once=False)'
+            store_error_content: true
+            store_message_content: true
+        name: Check if Ready
+        to:
+        - Continue Workflow
+        type: '#Hume.Orchestra.Filter.MessageFilter'
+    -   config:
+            failure_handler: null
+            filter_script: "import utils\nif utils.stepTwoIsReady(once=True):\n  utils.startStepTwo()\n\
+                \  return True\nreturn False"
+            store_error_content: true
+            store_message_content: true
+        name: Check if Ready Trigger Once
+        to:
+        - Continue Workflow Triggered once
+        type: '#Hume.Orchestra.Filter.MessageFilter'
+    -   config:
+            store_error_content: true
+            store_message_content: true
+        name: Continue Workflow Triggered once
+        to: []
+        type: '#Hume.Orchestra.Monitor.Observer'
+    label: step2 with utils

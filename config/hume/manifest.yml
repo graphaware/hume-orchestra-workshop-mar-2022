@@ -1,0 +1,28 @@
+version: 1
+metadata:
+  name: kg-enhanced-search
+imports:
+  - ./workflow-knowledge-graph
+config:
+  - name: system.orchestra.experimental_enabled
+    value: true
+roles:
+  - name: ANALYST
+  - name: INVESTIGATOR
+  - name: EXTERNAL_APP
+users:
+  - username: analyst@hume.ga
+    name: Analyst User
+    password: analyst
+    roles:
+      - 'ANALYST'
+  - username: investigator@hume.ga
+    name: Investigator User
+    password: investigator
+    roles:
+      - 'INVESTIGATOR'
+keys:
+  - name: GRAPHQL_KEY
+    roles:
+      - EXTERNAL_APP
+    token: ${env:GRAPHQL_KEY_TOKEN}
